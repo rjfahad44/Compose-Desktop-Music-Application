@@ -596,8 +596,13 @@ val initialTracks = listOf(
     MusicTrack("Deep Flow", "BeatMaster", "images/4.jpg", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3")
 )
 
+//"C:\Users\USER\AppData\Roaming"
+
+val appDataDir = File(System.getProperty("user.home"), "AppData/Roaming/MusicPlayer").also {
+    it.mkdirs() // Create the directory if it doesn’t exist
+}
 // File to store user-added tracks
-val storageFile = File("user_tracks.json")
+val storageFile =File(appDataDir, "user_tracks.json")
 
 // Function to save tracks to file
 fun saveUserTracks(tracks: List<MusicTrack>) {
