@@ -12,9 +12,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -399,6 +401,7 @@ fun TrackItem(track: MusicTrack, isSelected: Boolean, onClick: () -> Unit, onDel
 }
 
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, String) -> Unit) {
 
@@ -409,6 +412,8 @@ fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, Str
         properties = DialogProperties(
             dismissOnClickOutside = false,
             dismissOnBackPress = true,
+            usePlatformDefaultWidth = true,
+            usePlatformInsets = false
         )
     ) {
         Surface(
@@ -417,7 +422,16 @@ fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, Str
             modifier = Modifier.fillMaxSize()
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                Text("Add New Song", color = Color.White, style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Add New Song", color = Color.White, style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp))
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close add dialog", tint = Color.White)
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
 
                 var title by remember { mutableStateOf("") }
@@ -523,7 +537,7 @@ fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, Str
                                 showErrorDialog = true // Show error dialog
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFBB86FC)),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF3E9F41)),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Done", color = Color.White, style = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp))
