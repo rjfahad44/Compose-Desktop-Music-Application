@@ -1,3 +1,9 @@
+## ScreenShorts
+
+[1](https://github.com/rjfahad44/Compose-Desktop-Music-Application/blob/master/screenshorts/Screenshot%202025-04-13%20174542.png)
+[1](https://github.com/rjfahad44/Compose-Desktop-Music-Application/blob/master/screenshorts/Screenshot%202025-04-13%20174515.png)
+[1](https://github.com/rjfahad44/Compose-Desktop-Music-Application/blob/master/screenshorts/Screenshot%202025-04-13%20174459.png)
+
 
 ## Prerequisites
 
