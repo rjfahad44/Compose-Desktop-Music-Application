@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import models.MusicTrack
+import util.isValidAudioFile
 import java.awt.FileDialog
 import java.awt.Frame
 
@@ -131,17 +132,42 @@ fun AddSongDialog(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = url,
-                    onValueChange = { url = it },
-                    label = { Text("Track URL", color = Color.LightGray, style = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp)) },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = Color.White,
-                        focusedBorderColor = Color.White,
-                        unfocusedBorderColor = Color.Gray
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = url,
+                        onValueChange = { url = it },
+                        label = { Text("Track URL", color = Color.LightGray, style = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp)) },
+                        modifier = Modifier.weight(1f),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            textColor = Color.White,
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.Gray
+                        )
                     )
-                )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val fileDialog = FileDialog(null as Frame?, "Select Song", FileDialog.LOAD)
+                            fileDialog.isMultipleMode = false
+                            fileDialog.file = "*.mp3;*.wav;*.m4a" // Filter for image files
+                            fileDialog.isVisible = true
+                            val selectedFile = fileDialog.files.firstOrNull()
+
+                            url = if (selectedFile != null && selectedFile.exists() && selectedFile.isValidAudioFile()) {
+                                selectedFile.toURI().toString() // Use file:// URI for MediaPlayer
+                            } else {
+                                "" // Reset to empty if invalid
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF00B0FF)),
+                        modifier = Modifier.height(60.dp).padding(top = 6.dp)
+                    ) {
+                        Text("Browse", color = Color.White, style = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp))
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {

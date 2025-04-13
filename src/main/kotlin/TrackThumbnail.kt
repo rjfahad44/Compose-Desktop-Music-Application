@@ -41,9 +41,16 @@ fun TrackThumbnail(
 
         isLoading = true
         imageBitmap = when {
-            File(track.image).exists() -> loadImageBitmapFromFile(track.image)
-            track.image.isImageUrl() -> loadImageBitmapFromUrl(track.image)
-            else -> null
+            File(track.image).exists() -> {
+                loadImageBitmapFromFile(track.image)
+            }
+            track.image.isImageUrl() -> {
+                loadImageBitmapFromUrl(track.image)
+            }
+            else -> {
+                println("Invalid image path: ${track.image}")
+                null
+            }
         }
         isLoading = false
     }
@@ -52,18 +59,17 @@ fun TrackThumbnail(
         modifier = imageModifier,
         contentAlignment = Alignment.Center
     ) {
+        Image(
+            painter = imageBitmap?.let { BitmapPainter(it) } ?: painterResource(if (track.image?.startsWith("images", ignoreCase = true) == true) track.image else "images/ic_song.webp"),
+            contentDescription = "Track thumbnail",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(24.dp),
                 color = Color(0xFF00B0FF),
                 strokeWidth = 2.dp
-            )
-        } else {
-            Image(
-                painter = imageBitmap?.let { BitmapPainter(it) } ?: painterResource(if (!track.image.isImageUrl()) track.image?:"" else "images/ic_song.webp" ),
-                contentDescription = "Track thumbnail",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
             )
         }
     }

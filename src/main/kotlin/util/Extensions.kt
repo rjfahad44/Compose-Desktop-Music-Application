@@ -39,9 +39,6 @@ fun loadUserTracks(): List<MusicTrack> {
     }
 }
 
-
-fun String?.isImageUrl() = this?.startsWith("http", ignoreCase = true) == true || this?.startsWith("https", ignoreCase = true) == true
-
 // Load image from local file path
 fun loadImageBitmapFromFile(filePath: String): ImageBitmap? {
     return try {
@@ -100,6 +97,19 @@ fun String?.isValidMediaUrl(): Boolean {
         // Invalid URI syntax
         false
     }
+}
+
+
+fun File.isValidAudioFile(): Boolean {
+    val validExtensions = listOf("mp3", "wav", "m4a")
+    return exists() && isFile && extension.lowercase() in validExtensions
+}
+
+fun String?.isImageUrl() = this?.startsWith("http", ignoreCase = true) == true || this?.startsWith("https", ignoreCase = true) == true
+
+fun File.isValidImageFile(): Boolean {
+    val validExtensions = listOf("jpg", "jpeg", "png")
+    return exists() && isFile && extension.lowercase() in validExtensions
 }
 
 fun Double.formatTime(): String {
