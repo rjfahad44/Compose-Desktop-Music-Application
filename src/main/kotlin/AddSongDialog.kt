@@ -14,12 +14,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import models.MusicTrack
 import java.awt.FileDialog
 import java.awt.Frame
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, String) -> Unit) {
+fun AddSongDialog(
+    onDismiss: () -> Unit,
+    track: MusicTrack?,
+    onAddSong: (String, String, String, String) -> Unit,
+    ) {
 
     var showErrorDialog by remember { mutableStateOf(false) } // For error alert
 
@@ -54,10 +59,10 @@ fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, Str
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                var title by remember { mutableStateOf("") }
-                var artist by remember { mutableStateOf("") }
-                var image by remember { mutableStateOf("") }
-                var url by remember { mutableStateOf("") }
+                var title by remember { mutableStateOf(track?.title?: "") }
+                var artist by remember { mutableStateOf(track?.artist?:"") }
+                var image by remember { mutableStateOf(track?.image?:"") }
+                var url by remember { mutableStateOf(track?.url?:"") }
 
                 OutlinedTextField(
                     value = title,

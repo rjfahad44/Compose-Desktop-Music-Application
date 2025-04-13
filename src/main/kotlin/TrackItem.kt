@@ -7,6 +7,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ fun TrackItem(
     isSelected: Boolean,
     isPlaying: Boolean,
     onClick: () -> Unit,
+    onEdit: (() -> Unit)?,
     onDelete: (() -> Unit)?
 ) {
     Card(
@@ -47,6 +49,11 @@ fun TrackItem(
                 ) {
                     // Show equalizer only for the selected track
                     EqualizerAnimation(isPlaying = isPlaying)
+                }
+            }
+            if (onEdit != null) {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.Yellow)
                 }
             }
             if (onDelete != null) {

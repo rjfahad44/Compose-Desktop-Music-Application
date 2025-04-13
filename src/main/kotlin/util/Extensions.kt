@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import models.MusicTrack
 import java.awt.image.BufferedImage
 import java.io.File
+import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
@@ -81,6 +82,23 @@ suspend fun loadImageBitmapFromUrl(url: String): ImageBitmap? {
             println("Error loading image from URL: $url, ${e.message}")
             null
         }
+    }
+}
+
+fun String?.isValidMediaUrl(): Boolean {
+    if (this.isNullOrBlank()) return false
+    return try {
+        val uri = URI(this)
+        if (uri.scheme == null) {
+            // Check if it’s a valid local file
+            File(this).exists()
+        } else {
+            // Check for valid schemes
+            uri.scheme in listOf("file", "http", "https")
+        }
+    } catch (e: Exception) {
+        // Invalid URI syntax
+        false
     }
 }
 
