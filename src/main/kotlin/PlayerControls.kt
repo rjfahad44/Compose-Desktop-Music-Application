@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import models.MusicTrack
 import util.formatTime
-import util.loadImageFromFile
 
 @Composable
 fun PlayerControls(
@@ -48,13 +47,9 @@ fun PlayerControls(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val imageBitmap = loadImageFromFile(track.image?:"") ?: painterResource(track.image?:"images/ic_song.webp")
-                Image(
-                    //painter = painterResource(track.image?:"images/ic_song.webp"),
-                    painter = if (imageBitmap is ImageBitmap) BitmapPainter(imageBitmap) else imageBitmap as Painter,
-                    modifier = Modifier.size(50.dp, 50.dp).clip(RoundedCornerShape(12.dp)),
-                    contentDescription = "Thumb image",
-                    contentScale = ContentScale.Crop
+                TrackThumbnail(
+                    track = track,
+                    modifier = Modifier.size(50.dp, 50.dp).clip(RoundedCornerShape(12.dp))
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(modifier = Modifier.weight(1f)) {

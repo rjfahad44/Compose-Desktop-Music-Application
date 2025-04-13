@@ -95,7 +95,6 @@ fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, Str
                         onValueChange = { image = it },
                         label = { Text("Image Path/Url", color = Color.LightGray, style = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp)) },
                         modifier = Modifier.weight(1f),
-                        enabled = false, // Make it read-only
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             textColor = Color.White,
                             disabledTextColor = Color.White,
@@ -112,11 +111,11 @@ fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, Str
                             fileDialog.file = "*.jpg;*.png" // Filter for image files
                             fileDialog.isVisible = true
                             val selectedFile = fileDialog.files.firstOrNull()
-                            if (selectedFile != null) {
-                                image = selectedFile.absolutePath // Update with selected file path
-                            }
-                            if (image.isEmpty()){
-                                image = "images/ic_song.webp" // set default image
+
+                            image = if (selectedFile != null && selectedFile.exists()) {
+                                selectedFile.absolutePath // Update with selected file path
+                            } else {
+                                "images/ic_song.webp"
                             }
                         },
                         colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF00B0FF)),
@@ -152,6 +151,7 @@ fun AddSongDialog(onDismiss: () -> Unit, onAddSong: (String, String, String, Str
                     Button(
                         onClick = {
                             if (title.isNotBlank() && artist.isNotBlank() && url.isNotBlank()) {
+                                if (image.isEmpty()) image = "images/ic_song.webp"
                                 onAddSong(title, artist, image, url)
                             } else {
                                 showErrorDialog = true // Show error dialog

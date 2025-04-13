@@ -136,6 +136,7 @@ fun MusicApp() {
                     TrackItem(
                         track = track,
                         isSelected = tracks.indexOf(track) == currentTrackIndex,
+                        isPlaying = isPlaying,
                         onClick = {
                             currentTrackIndex = tracks.indexOf(track)
                             isPlaying = true
