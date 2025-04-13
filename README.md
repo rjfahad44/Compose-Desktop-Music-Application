@@ -1,9 +1,15 @@
 ## ScreenShorts
+- **1 <p align="center">
+<img src="screenshorts/Screenshot 2025-04-13 174459.png"  />
+</p><br/>
 
-[1](https://github.com/rjfahad44/Compose-Desktop-Music-Application/blob/master/screenshorts/Screenshot%202025-04-13%20174542.png)
-[1](https://github.com/rjfahad44/Compose-Desktop-Music-Application/blob/master/screenshorts/Screenshot%202025-04-13%20174515.png)
-[1](https://github.com/rjfahad44/Compose-Desktop-Music-Application/blob/master/screenshorts/Screenshot%202025-04-13%20174459.png)
+- **2 <p align="center">
+<img src="screenshorts/Screenshot 2025-04-13 174515.png"  />
+</p><br/>
 
+- **3 <p align="center">
+  <img src="screenshorts/Screenshot 2025-04-13 174542.png"  />
+</p><br/>
 
 ## Prerequisites
 
