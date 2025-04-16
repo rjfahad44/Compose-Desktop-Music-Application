@@ -11,13 +11,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
 import javafx.embed.swing.JFXPanel
 import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
@@ -27,6 +32,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import models.MusicTrack
 import util.*
+import java.awt.Dimension
 
 
 // Function to create and configure a MediaPlayer
@@ -198,6 +204,11 @@ fun MusicApp() {
                 title = { Text("Music Player", color = Color.White) },
                 backgroundColor = Color.Black,
                 actions = {
+//                    IconButton(onClick = {
+//
+//                    }) {
+//                        Icon(Icons.Default.ThumbUp, contentDescription = "Open Shorts", tint = Color.White)
+//                    }
                     IconButton(onClick = {
                         currentTrack.value = null
                         showAddDialog.value = true
@@ -299,8 +310,13 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         icon = painterResource("images/icon.ico"),
-        title = "Music Player"
+        title = "Music Player",
+        state = rememberWindowState(
+            size = DpSize(500.dp, 500.dp),
+            position = WindowPosition.Aligned(Alignment.Center) // Center on screen
+        ),
     ) {
+        window.minimumSize = Dimension(500, 500)
         MusicApp()
     }
 }

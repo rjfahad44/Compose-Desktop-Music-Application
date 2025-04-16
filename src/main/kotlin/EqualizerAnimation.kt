@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun EqualizerAnimation(
     isPlaying: Boolean,
-    barCount: Int = 40, // Increased to 6 bars
+    barCount: Int = 20, // Increased to 6 bars
     minHeight: Dp = 4.dp, // Minimum bar height
     maxHeight: Dp = 60.dp, // Maximum bar height
     modifier: Modifier = Modifier

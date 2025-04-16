@@ -29,7 +29,7 @@ fun TrackItem(
     Card(
         shape = RoundedCornerShape(12.dp),
         backgroundColor = if (isSelected) Color(0xFF3D3D3D) else Color(0xFF1E1E1E),
-        modifier = Modifier.fillMaxWidth().clickable { onClick() }
+        modifier = Modifier.fillMaxWidth().padding(0.dp).clickable { onClick() }
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
 
@@ -38,10 +38,12 @@ fun TrackItem(
             )
 
             Spacer(modifier = Modifier.width(8.dp))
+
             Column(modifier = Modifier.weight(1f)) {
-                Text(track.title, fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Medium)
-                Text(track.artist, fontSize = 14.sp, color = Color.Gray)
+                Text(track.title, fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                Text(track.artist, fontSize = 11.sp, color = Color.Gray)
             }
+
             if (isSelected) {
                 Row(
                     modifier = Modifier.weight(1f),

@@ -31,6 +31,12 @@ val initialTracks = listOf(
         "Sky Dreams",
         "DJ Relax",
         "images/5.jpg",
-        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song Maltese"
+        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3"
+    ),
+    MusicTrack(
+        "Sky Dreams",
+        "DJ Relax",
+        "images/6.jpg",
+        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
     ),
 )

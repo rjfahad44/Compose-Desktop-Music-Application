@@ -26,7 +26,7 @@ fun TrackThumbnail(
     modifier: Modifier = Modifier
 ) {
     val imageModifier = modifier
-        .size(80.dp, 100.dp)
+        .size(60.dp, 70.dp)
         .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
 
     var imageBitmap by remember(track.image) { mutableStateOf<ImageBitmap?>(null) }
