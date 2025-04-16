@@ -1,3 +1,5 @@
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,173 +23,172 @@ import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
 import javafx.util.Duration
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import models.MusicTrack
-import util.isValidMediaUrl
-import util.loadUserTracks
-import util.saveUserTracks
-import java.io.File
+import util.*
 
-val initialTracks = listOf(
-    MusicTrack(
-        "Calm Nights",
-        "Lofi Chill",
-        "images/1.jpg",
-        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-    ),
-    MusicTrack(
-        "Sky Dreams",
-        "DJ Relax",
-        "images/2.jpg",
-        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
-    ),
-    MusicTrack(
-        "Focus Vibes",
-        "Ambient Sound",
-        "images/3.jpg",
-        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
-    ),
-    MusicTrack(
-        "Deep Flow",
-        "BeatMaster",
-        "images/4.jpg",
-        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
-    ),
-    MusicTrack(
-        "Sky Dreams",
-        "DJ Relax",
-        "images/5.jpg",
-        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song Maltese"
-    ),
-)
+
+// Function to create and configure a MediaPlayer
+fun createMediaPlayer(
+    mediaUrl: String,
+    onReady: (MediaPlayer) -> Unit,
+    onEndOfMedia: () -> Unit,
+    onPlay: () -> Unit,
+    onPause: () -> Unit,
+    onError: (Exception) -> Unit
+): MediaPlayer? {
+    return try {
+        JFXPanel() // Initialize JavaFX (consider moving to app startup)
+        val media = Media(mediaUrl)
+        val player = MediaPlayer(media)
+
+        player.setOnReady { onReady(player) }
+        player.setOnEndOfMedia { onEndOfMedia() }
+        player.setOnError { onError(Exception(player.error.toString())) }
+
+        // Listen to status changes
+        player.statusProperty().addListener { _, _, newStatus ->
+            when (newStatus) {
+                MediaPlayer.Status.PLAYING -> onPlay()
+                MediaPlayer.Status.PAUSED -> onPause()
+                else -> Unit
+            }
+        }
+
+        player
+    } catch (e: Exception) {
+        println("Failed to create media player: ${e.message}")
+        null
+    }
+}
+
+// Function to handle track playback logic
+fun playTrack(
+    trackIndex: Int,
+    tracks: List<MusicTrack>,
+    mediaPlayerState: MutableState<MediaPlayer?>,
+    isPlaying: MutableState<Boolean>,
+    isLoading: MutableState<Boolean>,
+    currentTrackIndex: MutableState<Int>,
+    duration: MutableState<Double>,
+    onNextTrack: () -> Unit
+) {
+    val track = tracks.getOrNull(trackIndex) ?: return
+    val url = track.url
+    if (!url.isValidMediaUrl()) {
+        println("Invalid media URL for track ${track.title}: $url")
+        isLoading.value = false
+        isPlaying.value = false
+        currentTrackIndex.value = -1
+        onNextTrack()
+        return
+    }
+
+    cleanupMediaPlayer(mediaPlayerState)
+
+    isLoading.value = true
+    val mediaUrl = url.toNormalizeMediaUrl()
+    val player = createMediaPlayer(
+        mediaUrl = mediaUrl,
+        onReady = {
+            duration.value = it.totalDuration.toMillis()
+            isLoading.value = false
+            it.play()
+        },
+        onEndOfMedia = onNextTrack,
+        onPlay = {
+            isPlaying.value = true
+        },
+        onPause = {
+            isPlaying.value = false
+        },
+        onError = {
+            println("Error for ${track.title}: ${it.message}")
+            isLoading.value = false
+            isPlaying.value = false
+            onNextTrack()
+        }
+    )
+
+    mediaPlayerState.value = player
+}
+
+
+// Function to clean up the existing media player
+fun cleanupMediaPlayer(mediaPlayerState: MutableState<MediaPlayer?>) {
+    mediaPlayerState.value?.stop()
+    mediaPlayerState.value?.dispose()
+    mediaPlayerState.value = null
+}
+
 
 @Composable
 @Preview
 fun MusicApp() {
-    var currentTrackIndex by remember { mutableStateOf(-1) }
-    var isPlaying by remember { mutableStateOf(false) }
-    var isSeeking by remember { mutableStateOf(false) }
+    val currentTrackIndex = remember { mutableStateOf(-1) }
+    val isPlaying = remember { mutableStateOf(false) }
+    val isSeeking = remember { mutableStateOf(false) }
     val mediaPlayerState = remember { mutableStateOf<MediaPlayer?>(null) }
-    var currentPosition by remember { mutableStateOf(0.0) }
-    var duration by remember { mutableStateOf(0.0) }
-    var isLoading by remember { mutableStateOf(false) }
-    var tracks by remember { mutableStateOf((initialTracks + loadUserTracks()).toMutableList()) }
-    var currentTrack by remember { mutableStateOf<MusicTrack?>(null) }
-    var showAddDialog by remember { mutableStateOf(false) }
+    val currentPosition = remember { mutableStateOf(0.0) }
+    val duration = remember { mutableStateOf(0.0) }
+    val isLoading = remember { mutableStateOf(false) }
+    val tracks = remember { mutableStateOf((initialTracks + loadUserTracks()).toMutableList()) }
+    val currentTrack = remember { mutableStateOf<MusicTrack?>(null) }
+    val showAddDialog = remember { mutableStateOf(false) }
 
-    // Coroutine scope for managing seek updates
     val scope = rememberCoroutineScope()
 
-    fun updateMediaPlayer(trackIndex: Int) {
-        // Stop and dispose of existing player
-        mediaPlayerState.value?.stop()
-        mediaPlayerState.value?.dispose()
-        mediaPlayerState.value = null
-
-        if (trackIndex !in tracks.indices) {
-            isLoading = false
-            isPlaying = false
-            currentTrackIndex = -1
-            println("Invalid track index: $trackIndex")
-            return
-        }
-
-        val track = tracks[trackIndex]
-        val url = track.url
-
-        // Validate URL
-        if (!url.isValidMediaUrl()) {
-            println("Invalid media URL for track ${track.title}: $url")
-            isLoading = false
-            isPlaying = false
-            currentTrackIndex = -1
-            // Optionally skip to next track
-            if (trackIndex < tracks.size - 1) {
-                currentTrackIndex = trackIndex + 1
-                updateMediaPlayer(currentTrackIndex)
-            }
-            return
-        }
-
-        isLoading = true
-        try {
-            // Normalize URL for local files
-            val mediaUrl = if (File(url).exists()) {
-                File(url).toURI().toString() // Convert to file:// URI
-            } else {
-                url // Assume network URL
-            }
-
-            // Initialize JavaFX (if not already done)
-            JFXPanel() // Consider moving to app initialization
-            val media = Media(mediaUrl)
-            val player = MediaPlayer(media)
-
-            player.setOnReady {
-                duration = player.totalDuration.toMillis()
-                isLoading = false
-                if (isPlaying) player.play()
-            }
-
-            player.setOnEndOfMedia {
-                if (trackIndex < tracks.size - 1) {
-                    currentTrackIndex = trackIndex + 1
-                    updateMediaPlayer(currentTrackIndex)
-                } else {
-                    isPlaying = false
-                    currentTrackIndex = -1
-                }
-            }
-
-            player.setOnError {
-                println("Media player error for ${track.title}: ${player.error}")
-                isLoading = false
-                isPlaying = false
-                // Optionally skip to next track
-                if (trackIndex < tracks.size - 1) {
-                    currentTrackIndex = trackIndex + 1
-                    updateMediaPlayer(currentTrackIndex)
-                }
-            }
-
-            mediaPlayerState.value = player
-        } catch (e: Exception) {
-            println("Failed to initialize media player for ${track.title}: ${e.message}")
-            isLoading = false
-            isPlaying = false
-            currentTrackIndex = -1
-            // Optionally skip to next track
-            if (trackIndex < tracks.size - 1) {
-                currentTrackIndex = trackIndex + 1
-                updateMediaPlayer(currentTrackIndex)
-            }
+    fun tryNextTrack() {
+        if (currentTrackIndex.value < tracks.value.size - 1) {
+            currentTrackIndex.value++
+            playTrack(
+                trackIndex = currentTrackIndex.value,
+                tracks = tracks.value,
+                mediaPlayerState = mediaPlayerState,
+                isPlaying = isPlaying,
+                isLoading = isLoading,
+                currentTrackIndex = currentTrackIndex,
+                duration = duration,
+                onNextTrack = { tryNextTrack() }
+            )
+        } else {
+            isPlaying.value = false
+            currentTrackIndex.value = -1
         }
     }
 
-    // Update player when track changes
-    LaunchedEffect(currentTrackIndex) {
-        if (currentTrackIndex >= 0) {
-            updateMediaPlayer(currentTrackIndex)
+    LaunchedEffect(currentTrackIndex.value) {
+        if (currentTrackIndex.value in tracks.value.indices) {
+            playTrack(
+                trackIndex = currentTrackIndex.value,
+                tracks = tracks.value,
+                mediaPlayerState = mediaPlayerState,
+                isPlaying = isPlaying,
+                isLoading = isLoading,
+                currentTrackIndex = currentTrackIndex,
+                duration = duration,
+                onNextTrack = { tryNextTrack() }
+            )
         }
     }
 
-    // Cleanup media player on dispose
     DisposableEffect(mediaPlayerState) {
         val progressJob = scope.launch {
-            while (true) {
+            while (isActive) {
                 mediaPlayerState.value?.let { player ->
-                    if (!isSeeking) currentPosition = player.currentTime.toMillis()
-                    duration = player.totalDuration.toMillis()
+                    if (!isSeeking.value) {
+                        currentPosition.value = player.currentTime.toMillis()
+                    }
+                    duration.value = player.totalDuration.toMillis()
                 }
-                delay(100L)
+                delay(250L)
             }
         }
 
         onDispose {
             progressJob.cancel()
-            mediaPlayerState.value?.stop()
-            mediaPlayerState.value?.dispose()
-            mediaPlayerState.value = null
+            cleanupMediaPlayer(mediaPlayerState)
         }
     }
 
@@ -198,8 +199,8 @@ fun MusicApp() {
                 backgroundColor = Color.Black,
                 actions = {
                     IconButton(onClick = {
-                        currentTrack = null
-                        showAddDialog = true
+                        currentTrack.value = null
+                        showAddDialog.value = true
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "Add Song", tint = Color.White)
                     }
@@ -207,93 +208,91 @@ fun MusicApp() {
             )
 
             LazyColumn(
-                modifier = Modifier.weight(1f).padding(horizontal = 8.dp, vertical = 8.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(tracks) { track ->
+                items(tracks.value) { track ->
                     TrackItem(
                         track = track,
-                        isSelected = tracks.indexOf(track) == currentTrackIndex,
-                        isPlaying = isPlaying,
+                        isSelected = tracks.value.indexOf(track) == currentTrackIndex.value,
+                        isPlaying = isPlaying.value,
                         onClick = {
-                            currentTrackIndex = tracks.indexOf(track)
-                            isPlaying = true
+                            currentTrackIndex.value = tracks.value.indexOf(track)
                         },
                         onEdit = if (track.isUserAdded) {
                             {
-                                currentTrack = track
-                                showAddDialog = true
+                                currentTrack.value = track
+                                showAddDialog.value = true
                             }
                         } else null,
                         onDelete = if (track.isUserAdded) {
                             {
-                                currentTrack = null
-                                tracks = tracks.toMutableList().apply { remove(track) }
-                                saveUserTracks(tracks)
+                                currentTrack.value = null
+                                tracks.value = tracks.value.toMutableList().apply { remove(track) }
+                                saveUserTracks(tracks.value)
                             }
                         } else null
                     )
                 }
             }
 
-            if (currentTrackIndex in tracks.indices) {
+            AnimatedVisibility(visible = currentTrackIndex.value in tracks.value.indices) {
                 PlayerControls(
-                    track = tracks[currentTrackIndex],
-                    isPlaying = isPlaying,
-                    isLoading = isLoading,
-                    progress = if (duration > 0) (currentPosition / duration).toFloat() else 0f,
+                    track = tracks.value[currentTrackIndex.value],
+                    isPlaying = isPlaying.value,
+                    isLoading = isLoading.value,
+                    progress = if (duration.value > 0) (currentPosition.value / duration.value).toFloat() else 0f,
                     onPlayPause = {
                         mediaPlayerState.value?.let { player ->
-                            if (isPlaying) player.pause() else player.play()
-                            isPlaying = !isPlaying
+                            if (isPlaying.value) player.pause() else player.play()
+                            isPlaying.value = !isPlaying.value
                         }
                     },
                     onSeek = { newPosition ->
-                        isSeeking = true
-                        currentPosition = (duration * newPosition)
+                        isSeeking.value = true
+                        currentPosition.value = (duration.value * newPosition)
                     },
-                    onSeekFinished = remember(mediaPlayerState) {
-                        { percent ->
-                            val newPosition = duration * percent
-                            currentPosition = newPosition
-                            mediaPlayerState.value?.seek(Duration(newPosition))
-                            isSeeking = false
-                        }
+                    onSeekFinished = { percent ->
+                        val newPosition = duration.value * percent
+                        currentPosition.value = newPosition
+                        mediaPlayerState.value?.seek(Duration(newPosition))
+                        isSeeking.value = false
                     },
                     onPrevious = {
-                        if (currentTrackIndex > 0) {
-                            currentTrackIndex--
-                            isPlaying = true
+                        if (currentTrackIndex.value > 0) {
+                            currentTrackIndex.value--
+                            isPlaying.value = true
                         }
                     },
                     onNext = {
-                        if (currentTrackIndex < tracks.size - 1) {
-                            currentTrackIndex++
-                            isPlaying = true
-                        }
+                        tryNextTrack()
                     },
-                    duration = duration,
-                    currentPosition = currentPosition
+                    duration = duration.value,
+                    currentPosition = currentPosition.value
                 )
             }
         }
 
-        if (showAddDialog) {
+        if (showAddDialog.value) {
             AddSongDialog(
-                onDismiss = { showAddDialog = false },
-                track = currentTrack,
+                onDismiss = { showAddDialog.value = false },
+                track = currentTrack.value,
                 onAddSong = { title, artist, image, url ->
-                    tracks = tracks.toMutableList().apply {
-                        remove(currentTrack)
+                    tracks.value = tracks.value.toMutableList().apply {
+                        remove(currentTrack.value)
                         add(MusicTrack(title, artist, image, url, isUserAdded = true))
                     }
-                    saveUserTracks(tracks)
-                    showAddDialog = false
+                    saveUserTracks(tracks.value)
+                    showAddDialog.value = false
                 }
             )
         }
     }
 }
+
+
 
 
 fun main() = application {

@@ -112,6 +112,15 @@ fun File.isValidImageFile(): Boolean {
     return exists() && isFile && extension.lowercase() in validExtensions
 }
 
+// Function to normalize URLs (local or network)
+fun String.toNormalizeMediaUrl(): String {
+    return if (File(this).exists()) {
+        File(this).toURI().toString() // Convert local file to file:// URI
+    } else {
+        this // Assume network URL
+    }
+}
+
 fun Double.formatTime(): String {
     val minutes = TimeUnit.MILLISECONDS.toMinutes(this.toLong())
     val seconds = TimeUnit.MILLISECONDS.toSeconds(this.toLong()) % 60
