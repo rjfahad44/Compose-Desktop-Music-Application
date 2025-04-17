@@ -1,5 +1,4 @@
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,180 +21,26 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import javafx.embed.swing.JFXPanel
-import javafx.scene.media.Media
-import javafx.scene.media.MediaPlayer
-import javafx.util.Duration
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import models.MusicTrack
+import models.PlayerController
+import models.PlayerState
+import ui.AddSongDialog
+import player.CustomPlayer
+import ui.PlayerControls
+import ui.TrackItem
 import util.*
 import java.awt.Dimension
-
-
-// Function to create and configure a MediaPlayer
-fun createMediaPlayer(
-    mediaUrl: String,
-    onReady: (MediaPlayer) -> Unit,
-    onEndOfMedia: () -> Unit,
-    onPlay: () -> Unit,
-    onPause: () -> Unit,
-    onError: (Exception) -> Unit
-): MediaPlayer? {
-    return try {
-        JFXPanel() // Initialize JavaFX (consider moving to app startup)
-        val media = Media(mediaUrl)
-        val player = MediaPlayer(media)
-
-        player.setOnReady { onReady(player) }
-        player.setOnEndOfMedia { onEndOfMedia() }
-        player.setOnError { onError(Exception(player.error.toString())) }
-
-        // Listen to status changes
-        player.statusProperty().addListener { _, _, newStatus ->
-            when (newStatus) {
-                MediaPlayer.Status.PLAYING -> onPlay()
-                MediaPlayer.Status.PAUSED -> onPause()
-                else -> Unit
-            }
-        }
-
-        player
-    } catch (e: Exception) {
-        println("Failed to create media player: ${e.message}")
-        null
-    }
-}
-
-// Function to handle track playback logic
-fun playTrack(
-    trackIndex: Int,
-    tracks: List<MusicTrack>,
-    mediaPlayerState: MutableState<MediaPlayer?>,
-    isPlaying: MutableState<Boolean>,
-    isLoading: MutableState<Boolean>,
-    currentTrackIndex: MutableState<Int>,
-    duration: MutableState<Double>,
-    onNextTrack: () -> Unit
-) {
-    val track = tracks.getOrNull(trackIndex) ?: return
-    val url = track.url
-    if (!url.isValidMediaUrl()) {
-        println("Invalid media URL for track ${track.title}: $url")
-        isLoading.value = false
-        isPlaying.value = false
-        currentTrackIndex.value = -1
-        onNextTrack()
-        return
-    }
-
-    cleanupMediaPlayer(mediaPlayerState)
-
-    isLoading.value = true
-    val mediaUrl = url.toNormalizeMediaUrl()
-    val player = createMediaPlayer(
-        mediaUrl = mediaUrl,
-        onReady = {
-            duration.value = it.totalDuration.toMillis()
-            isLoading.value = false
-            it.play()
-        },
-        onEndOfMedia = onNextTrack,
-        onPlay = {
-            isPlaying.value = true
-        },
-        onPause = {
-            isPlaying.value = false
-        },
-        onError = {
-            println("Error for ${track.title}: ${it.message}")
-            isLoading.value = false
-            isPlaying.value = false
-            onNextTrack()
-        }
-    )
-
-    mediaPlayerState.value = player
-}
-
-
-// Function to clean up the existing media player
-fun cleanupMediaPlayer(mediaPlayerState: MutableState<MediaPlayer?>) {
-    mediaPlayerState.value?.stop()
-    mediaPlayerState.value?.dispose()
-    mediaPlayerState.value = null
-}
 
 
 @Composable
 @Preview
 fun MusicApp() {
-    val currentTrackIndex = remember { mutableStateOf(-1) }
-    val isPlaying = remember { mutableStateOf(false) }
-    val isSeeking = remember { mutableStateOf(false) }
-    val mediaPlayerState = remember { mutableStateOf<MediaPlayer?>(null) }
-    val currentPosition = remember { mutableStateOf(0.0) }
-    val duration = remember { mutableStateOf(0.0) }
-    val isLoading = remember { mutableStateOf(false) }
+
     val tracks = remember { mutableStateOf((initialTracks + loadUserTracks()).toMutableList()) }
     val currentTrack = remember { mutableStateOf<MusicTrack?>(null) }
     val showAddDialog = remember { mutableStateOf(false) }
-
-    val scope = rememberCoroutineScope()
-
-    fun tryNextTrack() {
-        if (currentTrackIndex.value < tracks.value.size - 1) {
-            currentTrackIndex.value++
-            playTrack(
-                trackIndex = currentTrackIndex.value,
-                tracks = tracks.value,
-                mediaPlayerState = mediaPlayerState,
-                isPlaying = isPlaying,
-                isLoading = isLoading,
-                currentTrackIndex = currentTrackIndex,
-                duration = duration,
-                onNextTrack = { tryNextTrack() }
-            )
-        } else {
-            isPlaying.value = false
-            currentTrackIndex.value = -1
-        }
-    }
-
-    LaunchedEffect(currentTrackIndex.value) {
-        if (currentTrackIndex.value in tracks.value.indices) {
-            playTrack(
-                trackIndex = currentTrackIndex.value,
-                tracks = tracks.value,
-                mediaPlayerState = mediaPlayerState,
-                isPlaying = isPlaying,
-                isLoading = isLoading,
-                currentTrackIndex = currentTrackIndex,
-                duration = duration,
-                onNextTrack = { tryNextTrack() }
-            )
-        }
-    }
-
-    DisposableEffect(mediaPlayerState) {
-        val progressJob = scope.launch {
-            while (isActive) {
-                mediaPlayerState.value?.let { player ->
-                    if (!isSeeking.value) {
-                        currentPosition.value = player.currentTime.toMillis()
-                    }
-                    duration.value = player.totalDuration.toMillis()
-                }
-                delay(250L)
-            }
-        }
-
-        onDispose {
-            progressJob.cancel()
-            cleanupMediaPlayer(mediaPlayerState)
-        }
-    }
+    val playerState = remember { mutableStateOf<PlayerState?>(null) }
+    val playerController = remember { mutableStateOf<PlayerController?>(null) }
 
     MaterialTheme {
         Column(modifier = Modifier.fillMaxSize().background(Color(0xFF121212))) {
@@ -227,10 +71,10 @@ fun MusicApp() {
                 items(tracks.value) { track ->
                     TrackItem(
                         track = track,
-                        isSelected = tracks.value.indexOf(track) == currentTrackIndex.value,
-                        isPlaying = isPlaying.value,
+                        isSelected = tracks.value.indexOf(track) == playerState.value?.currentTrackIndex,
+                        isPlaying = playerState.value?.isPlaying ?: false,
                         onClick = {
-                            currentTrackIndex.value = tracks.value.indexOf(track)
+                            playerController.value?.playTrackAtIndex(tracks.value.indexOf(track))
                         },
                         onEdit = if (track.isUserAdded) {
                             {
@@ -246,43 +90,22 @@ fun MusicApp() {
                             }
                         } else null
                     )
+
                 }
             }
 
-            AnimatedVisibility(visible = currentTrackIndex.value in tracks.value.indices) {
-                PlayerControls(
-                    track = tracks.value.getOrNull(currentTrackIndex.value),
-                    isPlaying = isPlaying.value,
-                    isLoading = isLoading.value,
-                    progress = if (duration.value > 0) (currentPosition.value / duration.value).toFloat() else 0f,
-                    onPlayPause = {
-                        mediaPlayerState.value?.let { player ->
-                            if (isPlaying.value) player.pause() else player.play()
-                            isPlaying.value = !isPlaying.value
-                        }
-                    },
-                    onSeek = { newPosition ->
-                        isSeeking.value = true
-                        currentPosition.value = (duration.value * newPosition)
-                    },
-                    onSeekFinished = { percent ->
-                        val newPosition = duration.value * percent
-                        currentPosition.value = newPosition
-                        mediaPlayerState.value?.seek(Duration(newPosition))
-                        isSeeking.value = false
-                    },
-                    onPrevious = {
-                        if (currentTrackIndex.value > 0) {
-                            currentTrackIndex.value--
-                            isPlaying.value = true
-                        }
-                    },
-                    onNext = {
-                        tryNextTrack()
-                    },
-                    duration = duration.value,
-                    currentPosition = currentPosition.value
-                )
+            playerState.value?.let { state ->
+                AnimatedVisibility(visible = state.currentTrackIndex in tracks.value.indices) {
+                    PlayerControls(
+                        track = state.currentTrack,
+                        isPlaying = state.isPlaying,
+                        isLoading = state.isLoading,
+                        progress = if (state.duration > 0) (state.currentPosition / state.duration).toFloat() else 0f,
+                        controller = playerController.value ?: return@AnimatedVisibility,
+                        duration = state.duration,
+                        currentPosition = state.currentPosition
+                    )
+                }
             }
         }
 
@@ -300,10 +123,18 @@ fun MusicApp() {
                 }
             )
         }
+
+        CustomPlayer(
+            tracks = tracks.value,
+            onPlayerStateChanged = { state ->
+                playerState.value = state
+            },
+            onControllerChanged = { controller ->
+                playerController.value = controller
+            }
+        )
     }
 }
-
-
 
 
 fun main() = application {

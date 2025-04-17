@@ -16,7 +16,7 @@
 Before starting, ensure you have:
 
 - **Inno Setup**: Download and install from [jrsoftware.org](https://jrsoftware.org/isdl.php). Use the latest stable version (e.g., 6.2.2).
-- **IntelliJ IDEA**: Installed with your Music Player project configured (Kotlin, Compose Desktop).
+- **IntelliJ IDEA**: Installed with your Music player project configured (Kotlin, Compose Desktop).
 - **Built App**: Your app built as a JAR (e.g., `music-player.jar`) or native executable via `./gradlew package`.
     - Run `./gradlew build` or `./gradlew package` to generate the JAR in `build/libs/` or executable in `build/compose/binaries/`.
 - **Java Runtime (JRE)**: Required if your app is a JAR. Download a JRE (e.g., OpenJDK 21) or bundle it with [jpackage](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jpackage.html).
