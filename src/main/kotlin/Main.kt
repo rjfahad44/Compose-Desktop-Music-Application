@@ -1,4 +1,10 @@
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -10,15 +16,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import models.MusicTrack
@@ -30,32 +40,60 @@ import ui.PlayerControls
 import ui.TrackItem
 import util.*
 import java.awt.Dimension
+import kotlin.random.Random
 
 
 @Composable
 @Preview
-fun MusicApp() {
+fun MusicApp(windowState: WindowState) {
 
-    val tracks = remember { mutableStateOf((initialTracks + loadUserTracks()).toMutableList()) }
-    val currentTrack = remember { mutableStateOf<MusicTrack?>(null) }
-    val showAddDialog = remember { mutableStateOf(false) }
-    val playerState = remember { mutableStateOf<PlayerState?>(null) }
-    val playerController = remember { mutableStateOf<PlayerController?>(null) }
+    var tracks by remember { mutableStateOf((initialTracks + loadUserTracks()).toMutableList()) }
+    var currentTrack by remember { mutableStateOf<MusicTrack?>(null) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var playerState by remember { mutableStateOf<PlayerState?>(null) }
+    var playerController by remember { mutableStateOf<PlayerController?>(null) }
+
+    // Target size to animate to
+    var targetWidth by remember { mutableStateOf(480.dp) }
+    val animatedWidth = remember { Animatable(targetWidth, Dp.VectorConverter) }
+    // Animate width
+    LaunchedEffect(targetWidth) {
+        animatedWidth.animateTo(
+            targetWidth,
+            animationSpec = tween(durationMillis = 300, easing = LinearEasing)
+        )
+    }
+    windowState.size = DpSize(animatedWidth.value, 700.dp)
 
     MaterialTheme {
         Column(modifier = Modifier.fillMaxSize().background(Color(0xFF121212))) {
+            var rotation by remember { mutableStateOf(0f) }
+            val animatedRotation by animateFloatAsState(
+                targetValue = rotation,
+                animationSpec = tween(
+                    durationMillis = 300, // smoother duration
+                    easing = LinearEasing // constant speed
+                ),
+                label = "iconRotation"
+            )
             TopAppBar(
                 title = { Text("Music Player", color = Color.White) },
                 backgroundColor = Color.Black,
                 actions = {
-//                    IconButton(onClick = {
-//
-//                    }) {
-//                        Icon(Icons.Default.ThumbUp, contentDescription = "Open Shorts", tint = Color.White)
-//                    }
                     IconButton(onClick = {
-                        currentTrack.value = null
-                        showAddDialog.value = true
+                        rotation += 360f // Rotate once every click
+                        targetWidth = Random.nextInt(480, 800).dp
+                    }) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Open Shorts",
+                            tint = Color.White,
+                            modifier = Modifier.rotate(animatedRotation)
+                        )
+                    }
+                    IconButton(onClick = {
+                        currentTrack = null
+                        showAddDialog = true
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "Add Song", tint = Color.White)
                     }
@@ -68,25 +106,25 @@ fun MusicApp() {
                     .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(tracks.value) { track ->
+                items(tracks) { track ->
                     TrackItem(
                         track = track,
-                        isSelected = tracks.value.indexOf(track) == playerState.value?.currentTrackIndex,
-                        isPlaying = playerState.value?.isPlaying ?: false,
+                        isSelected = tracks.indexOf(track) == playerState?.currentTrackIndex,
+                        isPlaying = playerState?.isPlaying == true,
                         onClick = {
-                            playerController.value?.playTrackAtIndex(tracks.value.indexOf(track))
+                            playerController?.playTrackAtIndex(tracks.indexOf(track))
                         },
                         onEdit = if (track.isUserAdded) {
                             {
-                                currentTrack.value = track
-                                showAddDialog.value = true
+                                currentTrack = track
+                                showAddDialog = true
                             }
                         } else null,
                         onDelete = if (track.isUserAdded) {
                             {
-                                currentTrack.value = null
-                                tracks.value = tracks.value.toMutableList().apply { remove(track) }
-                                saveUserTracks(tracks.value)
+                                currentTrack = null
+                                tracks = tracks.toMutableList().apply { remove(track) }
+                                saveUserTracks(tracks)
                             }
                         } else null
                     )
@@ -94,14 +132,14 @@ fun MusicApp() {
                 }
             }
 
-            playerState.value?.let { state ->
-                AnimatedVisibility(visible = state.currentTrackIndex in tracks.value.indices) {
+            playerState?.let { state ->
+                AnimatedVisibility(visible = state.currentTrackIndex in tracks.indices) {
                     PlayerControls(
                         track = state.currentTrack,
                         isPlaying = state.isPlaying,
                         isLoading = state.isLoading,
                         progress = if (state.duration > 0) (state.currentPosition / state.duration).toFloat() else 0f,
-                        controller = playerController.value ?: return@AnimatedVisibility,
+                        controller = playerController ?: return@AnimatedVisibility,
                         duration = state.duration,
                         currentPosition = state.currentPosition
                     )
@@ -109,28 +147,28 @@ fun MusicApp() {
             }
         }
 
-        if (showAddDialog.value) {
+        if (showAddDialog) {
             AddSongDialog(
-                onDismiss = { showAddDialog.value = false },
-                track = currentTrack.value,
+                onDismiss = { showAddDialog = false },
+                track = currentTrack,
                 onAddSong = { title, artist, image, url ->
-                    tracks.value = tracks.value.toMutableList().apply {
-                        remove(currentTrack.value)
+                    tracks = tracks.toMutableList().apply {
+                        remove(currentTrack)
                         add(MusicTrack(title, artist, image, url, isUserAdded = true))
                     }
-                    saveUserTracks(tracks.value)
-                    showAddDialog.value = false
+                    saveUserTracks(tracks)
+                    showAddDialog = false
                 }
             )
         }
 
         CustomPlayer(
-            tracks = tracks.value,
+            tracks = tracks,
             onPlayerStateChanged = { state ->
-                playerState.value = state
+                playerState = state
             },
             onControllerChanged = { controller ->
-                playerController.value = controller
+                playerController = controller
             }
         )
     }
@@ -138,16 +176,17 @@ fun MusicApp() {
 
 
 fun main() = application {
+    val windowState = rememberWindowState(
+        size = DpSize(480.dp, 700.dp),
+        position = WindowPosition.Aligned(Alignment.Center)
+    )
     Window(
         onCloseRequest = ::exitApplication,
         icon = painterResource("images/icon.ico"),
         title = "Music Player",
-        state = rememberWindowState(
-            size = DpSize(500.dp, 500.dp),
-            position = WindowPosition.Aligned(Alignment.Center) // Center on screen
-        ),
+        state = windowState,
     ) {
-        window.minimumSize = Dimension(500, 500)
-        MusicApp()
+        window.minimumSize = Dimension(480, 700)
+        MusicApp(windowState)
     }
 }

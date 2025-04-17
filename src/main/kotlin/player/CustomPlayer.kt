@@ -4,9 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import javafx.embed.swing.JFXPanel
 import javafx.scene.media.Media
 import javafx.scene.media.MediaPlayer
@@ -27,30 +29,30 @@ fun CustomPlayer(
     onControllerChanged: (PlayerController) -> Unit,
 ) {
     val mediaPlayerState = remember { mutableStateOf<MediaPlayer?>(null) }
-    val currentTrackIndex = remember { mutableStateOf(-1) }
-    val isPlaying = remember { mutableStateOf(false) }
-    val isLoading = remember { mutableStateOf(false) }
-    val currentPosition = remember { mutableStateOf(0.0) }
-    val duration = remember { mutableStateOf(0.0) }
-    val isSeeking = remember { mutableStateOf(false) }
+    var currentTrackIndex by remember { mutableStateOf(-1) }
+    var isPlaying by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var currentPosition by remember { mutableStateOf(0.0) }
+    var duration by remember { mutableStateOf(0.0) }
+    var isSeeking by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Notify UI of state changes
     LaunchedEffect(
-        currentTrackIndex.value,
-        isPlaying.value,
-        isLoading.value,
-        currentPosition.value,
-        duration.value
+        currentTrackIndex,
+        isPlaying,
+        isLoading,
+        currentPosition,
+        duration
     ) {
         onPlayerStateChanged(
             PlayerState(
-                currentTrack = tracks.getOrNull(currentTrackIndex.value),
-                isPlaying = isPlaying.value,
-                isLoading = isLoading.value,
-                currentPosition = currentPosition.value,
-                duration = duration.value,
-                currentTrackIndex = currentTrackIndex.value
+                currentTrack = tracks.getOrNull(currentTrackIndex),
+                isPlaying = isPlaying,
+                isLoading = isLoading,
+                currentPosition = currentPosition,
+                duration = duration,
+                currentTrackIndex = currentTrackIndex
             )
         )
     }
@@ -60,10 +62,10 @@ fun CustomPlayer(
         val progressJob = scope.launch {
             while (isActive) {
                 mediaPlayerState.value?.let { player ->
-                    if (!isSeeking.value) {
-                        currentPosition.value = player.currentTime.toMillis()
+                    if (!isSeeking) {
+                        currentPosition = player.currentTime.toMillis()
                     }
-                    duration.value = player.totalDuration.toMillis()
+                    duration = player.totalDuration.toMillis()
                 }
                 delay(250L)
             }
@@ -81,72 +83,72 @@ fun CustomPlayer(
         val url = track.url
         if (!url.isValidMediaUrl()) {
             println("Invalid media URL for track ${track.title}: $url")
-            isLoading.value = false
-            isPlaying.value = false
-            currentTrackIndex.value = -1
+            isLoading = false
+            isPlaying = false
+            currentTrackIndex = -1
             onNextTrack()
             return
         }
 
         cleanupMediaPlayer(mediaPlayerState)
 
-        isLoading.value = true
+        isLoading = true
         val mediaUrl = url.toNormalizeMediaUrl()
         val player = createMediaPlayer(
             mediaUrl = mediaUrl,
             onReady = {
-                duration.value = it.totalDuration.toMillis()
-                isLoading.value = false
+                duration = it.totalDuration.toMillis()
+                isLoading = false
                 it.play()
             },
             onEndOfMedia = { onNextTrack() },
             onPlay = {
-                isPlaying.value = true
+                isPlaying = true
             },
             onPause = {
-                isPlaying.value = false
+                isPlaying = false
             },
             onError = {
                 println("Error for ${track.title}: ${it.message}")
-                isLoading.value = false
-                isPlaying.value = false
+                isLoading = false
+                isPlaying = false
                 onNextTrack()
             }
         )
 
         mediaPlayerState.value = player
-        currentTrackIndex.value = index
+        currentTrackIndex = index
     }
 
     // Function to try the next track
     fun tryNextTrack() {
-        if (currentTrackIndex.value < tracks.size - 1) {
-            currentTrackIndex.value++
-            playTrack(currentTrackIndex.value, onNextTrack = { tryNextTrack() })
+        if (currentTrackIndex < tracks.size - 1) {
+            currentTrackIndex++
+            playTrack(currentTrackIndex, onNextTrack = { tryNextTrack() })
         } else {
-            isPlaying.value = false
-            currentTrackIndex.value = -1
+            isPlaying = false
+            currentTrackIndex = -1
         }
     }
 
     // External controls
     fun playPause() {
         mediaPlayerState.value?.let { player ->
-            if (isPlaying.value) player.pause() else player.play()
-            isPlaying.value = !isPlaying.value
+            if (isPlaying) player.pause() else player.play()
+            isPlaying = !isPlaying
         }
     }
 
     fun seekTo(percent: Float) {
-        val newPosition = duration.value * percent
-        currentPosition.value = newPosition
+        val newPosition = duration * percent
+        currentPosition = newPosition
         mediaPlayerState.value?.seek(Duration(newPosition))
     }
 
     fun previousTrack() {
-        if (currentTrackIndex.value > 0) {
-            currentTrackIndex.value--
-            playTrack(currentTrackIndex.value, onNextTrack = { tryNextTrack() })
+        if (currentTrackIndex > 0) {
+            currentTrackIndex--
+            playTrack(currentTrackIndex, onNextTrack = { tryNextTrack() })
         }
     }
 
@@ -156,7 +158,7 @@ fun CustomPlayer(
 
     fun playTrackAtIndex(index: Int) {
         if (index in tracks.indices) {
-            currentTrackIndex.value = index
+            currentTrackIndex = index
             playTrack(index, onNextTrack = { tryNextTrack() })
         }
     }
@@ -167,10 +169,13 @@ fun CustomPlayer(
             PlayerController(
                 playPause = { playPause() },
                 seekTo = { newPosition ->
-                    isSeeking.value = true
-                    currentPosition.value = (duration.value * newPosition)
+                    isSeeking = true
+                    currentPosition = (duration * newPosition)
                 },
-                onSeekFinished = { percent -> seekTo(percent) },
+                onSeekFinished = { percent ->
+                    isSeeking = false
+                    seekTo(percent)
+                },
                 previousTrack = { previousTrack() },
                 nextTrack = { nextTrack() },
                 playTrackAtIndex = { index -> playTrackAtIndex(index) }
@@ -179,9 +184,9 @@ fun CustomPlayer(
     }
 
     // Start playback when track index changes
-    LaunchedEffect(currentTrackIndex.value) {
-        if (currentTrackIndex.value in tracks.indices) {
-            playTrack(currentTrackIndex.value, onNextTrack = { tryNextTrack() })
+    LaunchedEffect(currentTrackIndex) {
+        if (currentTrackIndex in tracks.indices) {
+            playTrack(currentTrackIndex, onNextTrack = { tryNextTrack() })
         }
     }
 
