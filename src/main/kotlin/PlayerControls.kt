@@ -22,7 +22,7 @@ import util.formatTime
 
 @Composable
 fun PlayerControls(
-    track: MusicTrack,
+    track: MusicTrack?,
     isPlaying: Boolean,
     isLoading: Boolean,
     progress: Float,
@@ -93,14 +93,16 @@ fun PlayerControls(
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TrackThumbnail(
-                        track = track,
-                        modifier = Modifier.size(50.dp, 50.dp).clip(RoundedCornerShape(12.dp))
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(track.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        Text(track.artist, color = Color.Gray, fontSize = 12.sp)
+                    track?.let {
+                        TrackThumbnail(
+                            track = track,
+                            modifier = Modifier.size(50.dp, 50.dp).clip(RoundedCornerShape(12.dp))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(track.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text(track.artist, color = Color.Gray, fontSize = 12.sp)
+                        }
                     }
                 }
 

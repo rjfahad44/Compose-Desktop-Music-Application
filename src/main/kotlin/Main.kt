@@ -251,7 +251,7 @@ fun MusicApp() {
 
             AnimatedVisibility(visible = currentTrackIndex.value in tracks.value.indices) {
                 PlayerControls(
-                    track = tracks.value[currentTrackIndex.value],
+                    track = tracks.value.getOrNull(currentTrackIndex.value),
                     isPlaying = isPlaying.value,
                     isLoading = isLoading.value,
                     progress = if (duration.value > 0) (currentPosition.value / duration.value).toFloat() else 0f,

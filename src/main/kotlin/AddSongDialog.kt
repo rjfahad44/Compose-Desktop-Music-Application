@@ -74,7 +74,8 @@ fun AddSongDialog(
                         textColor = Color.White,
                         focusedBorderColor = Color.White,
                         unfocusedBorderColor = Color.Gray
-                    )
+                    ),
+                    singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -87,7 +88,8 @@ fun AddSongDialog(
                         textColor = Color.White,
                         focusedBorderColor = Color.White,
                         unfocusedBorderColor = Color.Gray
-                    )
+                    ),
+                    singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -107,7 +109,8 @@ fun AddSongDialog(
                             focusedBorderColor = Color.White,
                             unfocusedBorderColor = Color.Gray,
                             disabledBorderColor = Color.Gray
-                        )
+                        ),
+                        singleLine = true
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -145,7 +148,8 @@ fun AddSongDialog(
                             textColor = Color.White,
                             focusedBorderColor = Color.White,
                             unfocusedBorderColor = Color.Gray
-                        )
+                        ),
+                        singleLine = true
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -206,7 +210,7 @@ fun AddSongDialog(
                 confirmButton = {
                     Button(
                         onClick = { showErrorDialog = false },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFBB86FC))
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF00B0FF))
                     ) {
                         Text("OK", color = Color.White)
                     }
