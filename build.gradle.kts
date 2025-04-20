@@ -44,7 +44,27 @@ dependencies {
     implementation("org.openjfx:javafx-controls:$javafxVersion:${getPlatform()}")
     implementation("org.openjfx:javafx-swing:$javafxVersion:${getPlatform()}")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+
+    // JavaCV and FFmpeg dependencies
+    implementation("org.bytedeco:javacv:1.5.10") 
+    implementation("org.bytedeco:ffmpeg-platform:6.1.1-1.5.10")
+
+    // Ktor
+    implementation("io.ktor:ktor-client-core:2.3.5")
+    implementation("io.ktor:ktor-client-okhttp:2.3.5")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
+
+    // slf4j
+    implementation("org.slf4j:slf4j-simple:2.0.9")
+
+    // Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.8.0")
 }
 
 compose.desktop {
@@ -52,15 +72,19 @@ compose.desktop {
         mainClass = "MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Exe, /*TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb*/)
+            targetFormats(TargetFormat.Exe, TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "MusicPlayer"
             packageVersion = "1.0.0"
             windows {
                 iconFile.set(file("src/main/resources/images/icon.ico"))
             }
+
+            // Include native libraries in distribution
+            includeAllModules = true
         }
     }
 }
+
 
 tasks.withType<JavaExec> {
     jvmArgs = listOf("--add-modules=javafx.controls,javafx.media,javafx.swing")

@@ -1,4 +1,4 @@
-package player
+package audio_player
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -209,8 +209,7 @@ fun createMediaPlayer(
 ): MediaPlayer? {
     return try {
         JFXPanel() // Initialize JavaFX (consider moving to app startup)
-        val media = Media(mediaUrl)
-        val player = MediaPlayer(media)
+        val player = MediaPlayer(Media(mediaUrl))
 
         player.setOnReady { onReady(player) }
         player.setOnEndOfMedia { onEndOfMedia() }
