@@ -208,8 +208,5 @@ fun main() = application {
     ) {
         window.minimumSize = Dimension(480, 700)
         MusicApp(windowState)
-        val url = "https://v.redd.it/g7694jen9sve1/HLSPlaylist.m3u8?a=1747716365%2CNDY5ZjZiOGIyMTQzYzhjMGI0ZTAwY2Q4MTEwZWJiMTEzYWRmYmQ4YzFiMjNjNmEyNWI4MWJlMGMzNGJiNDQ5Mw%3D%3D&v=1&f=sd"
-        //val videoUrl = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-        //CustomVideoPlayer(videoUrl.toNormalizeMediaUrl())
     }
 }

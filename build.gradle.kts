@@ -46,8 +46,8 @@ dependencies {
 
 
     // JavaCV and FFmpeg dependencies
-    implementation("org.bytedeco:javacv:1.5.10") 
-    implementation("org.bytedeco:ffmpeg-platform:6.1.1-1.5.10")
+    implementation("org.bytedeco:javacv:1.5.8")
+    implementation("org.bytedeco:ffmpeg:5.0-1.5.8")
 
     // Ktor
     implementation("io.ktor:ktor-client-core:2.3.5")
