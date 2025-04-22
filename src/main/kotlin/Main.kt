@@ -20,6 +20,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -101,6 +103,15 @@ fun MusicApp(windowState: WindowState) {
                                 println("RedditData: $it")
                             }
                         }
+                    }) {
+                        Icon(
+                            Icons.Filled.Phone,
+                            contentDescription = "API call",
+                            tint = Color.White,
+                            modifier = Modifier.rotate(animatedRotation)
+                        )
+                    }
+                    IconButton(onClick = {
                         rotation += 360f // Rotate once every click
                         targetWidth = Random.nextInt(480, 800).dp
                     }) {
