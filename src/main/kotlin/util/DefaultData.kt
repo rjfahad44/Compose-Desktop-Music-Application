@@ -40,3 +40,10 @@ val initialTracks = listOf(
         "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
     ),
 )
+
+val demoVideoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+val demoVideoUrlList = listOf(
+    "",
+    "",
+    ""
+)

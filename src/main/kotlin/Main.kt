@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -52,9 +54,11 @@ import models.PlayerState
 import ui.AddSongDialog
 import ui.PlayerControls
 import ui.TrackItem
+import util.demoVideoUrl
 import util.initialTracks
 import util.loadUserTracks
 import util.saveUserTracks
+import video_player.VideoPlayerImpl
 import java.awt.Dimension
 import kotlin.random.Random
 
@@ -219,5 +223,11 @@ fun main() = application {
     ) {
         window.minimumSize = Dimension(480, 700)
         MusicApp(windowState)
+
+//        Column {
+//            VideoPlayerImpl(
+//                url = demoVideoUrl,
+//                modifier = Modifier.fillMaxSize())
+//        }
     }
 }

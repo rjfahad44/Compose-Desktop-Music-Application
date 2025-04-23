@@ -44,10 +44,8 @@ dependencies {
     implementation("org.openjfx:javafx-controls:$javafxVersion:${getPlatform()}")
     implementation("org.openjfx:javafx-swing:$javafxVersion:${getPlatform()}")
 
-
-    // JavaCV and FFmpeg dependencies
-    implementation("org.bytedeco:javacv:1.5.8")
-    implementation("org.bytedeco:ffmpeg:5.0-1.5.8")
+    // VLCj
+    implementation("uk.co.caprica:vlcj:4.8.0")
 
     // Ktor
     implementation("io.ktor:ktor-client-core:2.3.5")
