@@ -4,8 +4,11 @@ import data.models.RedditResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpHeaders
 import io.ktor.http.path
+import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle.header
 
 class RedditApi(private val httpClient: HttpClient) {
 
@@ -24,6 +27,8 @@ class RedditApi(private val httpClient: HttpClient) {
                 path("r", "tiktokcringe", "$sort.json")
                 parameter("raw_json", 1)
                 parameter("t", top)
+                parameter("limit", 10)
+                header(HttpHeaders.UserAgent, "Mozilla/5.0 (Ktor Kotlin Client)")
             }
         }.body()
     }
