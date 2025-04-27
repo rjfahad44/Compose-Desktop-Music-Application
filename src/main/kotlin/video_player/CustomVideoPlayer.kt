@@ -10,11 +10,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
-import jdk.internal.util.OperatingSystem.isMacOS
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.component.CallbackMediaPlayerComponent
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent
 import java.awt.Component
+import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -58,6 +58,13 @@ private fun initializeMediaPlayerComponent(): Component {
     } else {
         EmbeddedMediaPlayerComponent()
     }
+}
+
+private fun isMacOS(): Boolean {
+    val os = System
+        .getProperty("os.name", "generic")
+        .lowercase(Locale.ENGLISH)
+    return "mac" in os || "darwin" in os
 }
 
 private fun Component.mediaPlayer() = when (this) {

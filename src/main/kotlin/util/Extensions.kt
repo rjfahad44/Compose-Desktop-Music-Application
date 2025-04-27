@@ -2,18 +2,23 @@ package util
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import data.models.RedditResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import models.MusicTrack
+import models.VideoData
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
+import kotlin.div
+import kotlin.text.orEmpty
 
 
 val appDataDir = File(System.getProperty("user.home"), "AppData/Roaming/MusicPlayer").also {
@@ -125,4 +130,39 @@ fun Double.formatTime(): String {
     val minutes = TimeUnit.MILLISECONDS.toMinutes(this.toLong())
     val seconds = TimeUnit.MILLISECONDS.toSeconds(this.toLong()) % 60
     return String.format("%d:%02d", minutes, seconds)
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun String.jsonToData():  List<VideoData> {
+    val jsonParser = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+    }
+    val response =  jsonParser.decodeFromString<RedditResponse>(this)
+    val videoData = response
+        .data
+        ?.posts
+        ?.map { post ->
+            val video = post.data?.secureMedia?.video
+            val width = video?.width
+            val height = video?.height
+            val aspectRatio = if (width != null && height != null) {
+                width.toFloat() / height.toFloat()
+            } else {
+                null
+            }
+            VideoData(
+                id = post.data?.id.orEmpty(),
+                mediaUri = video?.hlsUrl.orEmpty(),
+                previewImageUri = post.data?.preview?.images?.firstOrNull()?.source?.url.orEmpty(),
+                aspectRatio = aspectRatio
+            )
+        }
+        ?.filter { videoData ->
+            videoData.id.isNotBlank()
+                    && videoData.mediaUri.isNotBlank()
+                    && videoData.previewImageUri.isNotBlank()
+        }
+        .orEmpty()
+    return videoData
 }

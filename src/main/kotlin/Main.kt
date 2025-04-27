@@ -1,6 +1,5 @@
 
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
@@ -9,8 +8,6 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import ui.HomeScreen
 import java.awt.Dimension
 

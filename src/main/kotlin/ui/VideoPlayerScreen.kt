@@ -8,29 +8,28 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerSnapDistance
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.WindowState
 import kotlinx.coroutines.launch
 import util.demoVideoUrlList
@@ -39,9 +38,12 @@ import video_player.VideoPlayer
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun VideoPlayerScreen(pagerState: PagerState, windowState: WindowState) {
+fun VideoPlayerScreen(
+    windowState: WindowState
+) {
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { demoVideoUrlList.size })
+    val redditDataList by remember { mutableStateOf(demoVideoUrlList) }
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { redditDataList.size })
     val flingBehavior = PagerDefaults.flingBehavior(
         state = pagerState,
         pagerSnapDistance = PagerSnapDistance.atMost(1),
@@ -54,47 +56,7 @@ fun VideoPlayerScreen(pagerState: PagerState, windowState: WindowState) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121212))
-            .onPreviewKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown) {
-                    when (event.key) {
-                        Key.DirectionDown -> {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
-                            true
-                        }
-
-                        Key.DirectionUp -> {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                            }
-                            true
-                        }
-
-                        else -> false
-                    }
-                } else false
-            }
-            .pointerInput(Unit) {
-                while (true) {
-                    awaitPointerEventScope {
-                        val event = awaitPointerEvent()
-                        val scrollDeltaY = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
-
-                        if (scrollDeltaY > 0f && pagerState.currentPage > 0) {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                            }
-                        } else if (scrollDeltaY < 0f && pagerState.currentPage < demoVideoUrlList.lastIndex) {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
-                        }
-                    }
-                }
-            }
-
+            .background(Color(0xFF121212)),
     ) {
         VerticalPager(
             state = pagerState,
@@ -106,9 +68,10 @@ fun VideoPlayerScreen(pagerState: PagerState, windowState: WindowState) {
                 .align(Alignment.Center)
                 .padding(top = 70.dp)
         ) { pageIndex ->
-            val url = demoVideoUrlList[pageIndex]
+            val data = redditDataList[pageIndex]
+            println("VideoPlayerScreen: $data")
             VideoPlayer(
-                url = url,
+                url = data,
                 pagerState = pagerState,
                 pageIndex = pageIndex,
                 modifier = Modifier
@@ -117,10 +80,17 @@ fun VideoPlayerScreen(pagerState: PagerState, windowState: WindowState) {
             )
         }
 
-
         Column(
             modifier = Modifier.padding(8.dp).align(Alignment.BottomEnd)
         ) {
+            Text(
+                text = "${pagerState.currentPage} / ${pagerState.pageCount}",
+                textAlign = TextAlign.Center,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(8.dp).align(Alignment.CenterHorizontally)
+            )
             // Previous Page
             IconButton(
                 onClick = {
@@ -157,6 +127,5 @@ fun VideoPlayerScreen(pagerState: PagerState, windowState: WindowState) {
                 )
             }
         }
-
     }
 }

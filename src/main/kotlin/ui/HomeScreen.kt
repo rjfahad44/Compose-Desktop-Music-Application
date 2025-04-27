@@ -16,6 +16,7 @@ import androidx.compose.material.TabRowDefaults
 import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -35,7 +36,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(windowState: WindowState) {
-    val tabItems = arrayListOf("Audio Player", "Video Player")
+    val coroutineScope = rememberCoroutineScope()
+    val tabItems = remember { arrayListOf("Audio Player", "Video Player") }
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { tabItems.size })
 
     val flingBehavior = PagerDefaults.flingBehavior(
@@ -43,10 +45,8 @@ fun HomeScreen(windowState: WindowState) {
         pagerSnapDistance = PagerSnapDistance.atMost(1),
         snapAnimationSpec = SpringSpec(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessHigh),
     )
-    val coroutineScope = rememberCoroutineScope()
 
     Box(modifier = Modifier.fillMaxSize()) {
-
         HorizontalPager(
             modifier = Modifier.fillMaxSize(),
             state = pagerState,
@@ -54,8 +54,8 @@ fun HomeScreen(windowState: WindowState) {
             key = { index -> index }
         ) {
             when (it) {
-                0 -> AudioPlayerScreen(pagerState, windowState)
-                1 -> VideoPlayerScreen(pagerState, windowState)
+                0 -> AudioPlayerScreen(windowState)
+                1 -> VideoPlayerScreen(windowState)
             }
         }
 
